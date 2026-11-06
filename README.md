@@ -8,7 +8,7 @@ Private engineering and multi-repository coordination live in `SupraShellScripts
 
 ```text
 ~/Projects/SupraShellScripts/violentmonkey-workbench
-C:\Users\Mark\Projects\SupraShellScripts\violentmonkey-workbench
+C:\Users\<user>\Projects\SupraShellScripts\violentmonkey-workbench
 ```
 
 ## Repository role
@@ -22,4 +22,6 @@ See:
 - [`docs/PROMOTION_CONTRACT.md`](docs/PROMOTION_CONTRACT.md)
 - [`coordination/consumer.json`](coordination/consumer.json)
 
-Bootstrap and promotion-contract work is tracked by issue #1.
+Bootstrap and promotion-contract work is coordinated in private Workbench issue #9. This public repository has issues disabled.
+
+The public bootstrap verification is described in [docs/PROMOTION_CONTRACT.md](docs/PROMOTION_CONTRACT.md). It is not release qualification.
