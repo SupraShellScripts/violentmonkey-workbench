@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "repository": "SupraShellScripts/violentmonkey-workbench",
+  "role": "public-workbench-promotion-target",
+  "coordinator": "SupraShellScripts/violentmonkey-workbench-private",
+  "coordinatorParentIssue": "SupraShellScripts/violentmonkey-workbench-private#9",
+  "localPath": "SupraShellScripts/violentmonkey-workbench",
+  "defaultBranch": "main",
+  "promotion": {
+    "sourceRepository": "SupraShellScripts/violentmonkey-workbench-private",
+    "requiresPullRequest": true,
+    "privateValidationRequired": true,
+    "expectedEvidence": [
+      "source commit",
+      "extension compatibility reference",
+      "tooling image digests",
+      "installer and artifact checksums",
+      "SBOM",
+      "provenance",
+      "browser compatibility manifest",
+      "release notes"
+    ]
+  },
+  "allowedContent": [
+    "reviewed public source",
+    "installers and release artifacts",
+    "checksums and signatures",
+    "SBOM and provenance",
+    "compatibility manifests",
+    "public documentation"
+  ],
+  "prohibitedContent": [
+    "private credentials or signing keys",
+    "private fixtures or test accounts",
+    "engineering-only coordination state",
+    "unreviewed private source",
+    "directly developed release artifacts"
+  ],
+  "verification": {
+    "heavyRebuildHere": false,
+    "scope": ["manifest validation", "artifact presence", "checksum verification", "provenance linkage", "public-content boundary"]
+  }
+}
