@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { validateDescriptor, validatePaths, verifyBootstrap } from '../tools/verify-public-promotion.mjs';
+import { validateDescriptor, validatePaths, validateGitIndexModes, verifyBootstrap } from '../tools/verify-public-promotion.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('../coordination/consumer.json', import.meta.url), 'utf8'));
 const copy = () => structuredClone(fixture);
@@ -48,4 +48,27 @@ test('actual checkout is bootstrap-qualified only, never release-qualified', () 
   assert.equal(result.releaseQualified, false);
   assert.equal(result.status, 'pass');
   assert.ok(result.filesChecked >= 3);
+});
+
+test('Git index mode check rejects unmaterialized submodules and symlinks', () => {
+  const sha = 'a'.repeat(40);
+  assert.deepEqual(validateGitIndexModes('100644 ' + sha + ' 0\tREADME.md\0'), ['README.md']);
+  assert.deepEqual(validateGitIndexModes('100755 ' + sha + ' 0\ttools/verify-public-promotion.mjs\0'),
+    ['tools/verify-public-promotion.mjs']);
+  for (const mode of ['160000', '120000', '100664']) {
+    assert.throws(() => validateGitIndexModes(mode + ' ' + sha + ' 0\tx\0'),
+      /forbids symlink, gitlink or special mode/);
+  }
+});
+test('Git index mode check rejects unmerged stages, duplicate entries and partial output', () => {
+  const sha = 'b'.repeat(40);
+  assert.throws(() => validateGitIndexModes('100644 ' + sha + ' 1\tREADME.md\0'),
+    /Unmerged Git index/);
+  assert.throws(() => validateGitIndexModes('100644 ' + sha + ' 0\tREADME.md\0' +
+    '100644 ' + sha + ' 0\tREADME.md\0'), /duplicate/);
+  assert.throws(() => validateGitIndexModes('100644 ' + sha + ' 0\tREADME.md'),
+    /NUL-delimited/);
+  assert.throws(() => validateGitIndexModes(''), /NUL-delimited/);
+  assert.throws(() => validateGitIndexModes('100644 ' + sha + ' 0\t../escape\0'),
+    /unsafe/);
 });

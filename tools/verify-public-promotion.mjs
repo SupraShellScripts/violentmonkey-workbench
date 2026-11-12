@@ -1,4 +1,5 @@
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -93,6 +94,33 @@ export function validatePaths(paths) {
   return true;
 }
 
+
+/** Check Git index modes: unpopulated submodules are invisible to a tree walk.
+ * This never fetches any submodule, remote ref or private artifact.
+ */
+export function validateGitIndexModes(zeroDelimited) {
+  if (typeof zeroDelimited !== 'string' || !zeroDelimited.endsWith('\0')) {
+    throw new Error('Git index listing must be complete, NUL-delimited text');
+  }
+  const entries = zeroDelimited.slice(0, -1).split('\0');
+  if (!entries.length || (entries.length === 1 && !entries[0])) {
+    throw new Error('Empty public Git index listing');
+  }
+  const paths = [];
+  for (const entry of entries) {
+    const fields = /^([0-7]{6}) ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])\t(.+)$/s.exec(entry);
+    if (!fields) throw new Error('Unrecognized Git index entry shape');
+    const [, mode, , stage, filePath] = fields;
+    if (stage !== '0') throw new Error('Unmerged Git index stage is forbidden');
+    if (mode !== '100644' && mode !== '100755') {
+      throw new Error('Public Git index forbids symlink, gitlink or special mode: ' + mode);
+    }
+    paths.push(filePath);
+  }
+  validatePaths(paths);
+  return paths.sort();
+}
+
 export function inspectTree(root) {
   const found = [];
   function visit(dir) {
@@ -117,7 +145,14 @@ export function verifyBootstrap(root) {
   validateDescriptor(descriptor);
   const paths = inspectTree(normalizedRoot);
   validatePaths(paths);
-  return { status: 'pass', mode: 'bootstrap-only', releaseQualified: false, repository: REPOSITORY, filesChecked: paths.length };
+  const index = execFileSync('git', ['-C', normalizedRoot, 'ls-files', '--stage', '-z'], {
+    encoding: 'utf8',
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  const tracked = validateGitIndexModes(index);
+  const missing = tracked.filter(filePath => !paths.includes(filePath));
+  if (missing.length) throw new Error('Tracked public files absent from checkout: ' + missing.join(', '));
+  return { status: 'pass', mode: 'bootstrap-only', releaseQualified: false, repository: REPOSITORY, filesChecked: paths.length, trackedFilesChecked: tracked.length };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
