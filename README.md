@@ -1,4 +1,6 @@
-# Violentmonkey Workbench
+# Violentmonkey Workbench (deprecated)
+
+> **Deprecated — 2026-11-12. No new Workbench product releases or features are planned.** For userscript management and AI-agent integration, use [official Violentmonkey](https://github.com/violentmonkey/violentmonkey) and [official Violentmonkey MCP](https://github.com/violentmonkey/mcp). This is a historical public promotion repository, **not** an independent application or an endorsed upstream component. See [sunset notice](docs/SUNSET.md).
 
 Public promotion target for reviewed Violentmonkey Workbench source, releases, installers, checksums, SBOMs, provenance, compatibility manifests, and public documentation.
 
