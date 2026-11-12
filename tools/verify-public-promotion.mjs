@@ -77,6 +77,7 @@ export function validateDescriptor(value) {
 export function validatePaths(paths) {
   if (!Array.isArray(paths)) throw new Error('paths must be an array');
   const seen = new Set();
+  const portableKeys = new Set();
   for (const path of paths) {
     if (typeof path !== 'string' || !path || path.startsWith('/') || path.includes('\\') || path.includes('\0')) {
       throw new Error('invalid repository-relative path');
@@ -84,6 +85,20 @@ export function validatePaths(paths) {
     const parts = path.split('/');
     if (parts.some(x => !x || x === '.' || x === '..') || seen.has(path)) throw new Error('unsafe or duplicate path: ' + path);
     seen.add(path);
+    // Public promotions must materialize identically on Windows/macOS/Linux,
+    // not only on the Linux Actions runner. Catch case/Unicode aliases early.
+    const portableKey = path.normalize('NFC').toLowerCase();
+    if (portableKeys.has(portableKey)) {
+      throw new Error('non-portable case or Unicode alias in public path: ' + path);
+    }
+    portableKeys.add(portableKey);
+    if (parts.some(part =>
+      /[. ]$/.test(part)
+      || /[<>:"|?*\x00-\x1f]/.test(part)
+      || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i.test(part)
+      || part.toLowerCase() === '.git')) {
+      throw new Error('non-portable Windows/macOS checkout path: ' + path);
+    }
     if (BLOCKED_PAYLOAD_ROOTS.has(parts[0].toLowerCase())) {
       throw new Error('release payload is not covered by bootstrap-only verification: ' + path);
     }

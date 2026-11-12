@@ -59,6 +59,8 @@ node --test tests/verify-public-promotion.test.mjs
 node tools/verify-public-promotion.mjs
 ```
 
+The checked-out public source is also required to materialize consistently across Windows, macOS and Linux: the path guard rejects case/Unicode-normalization aliases, Windows reserved device names, trailing dot/space segments and other invalid checkout names. This remains a path-level check, not a cross-platform runtime test.
+
 The checker also rejects submodules/gitlinks (mode `160000`), tracked symlinks (mode `120000`), unmerged Git index entries and missing tracked files using read-only `git ls-files --stage -z`; it does not fetch any other repository. This Git index custody check is distinct from release-asset and browser qualification.
 
 The checker enforces the pinned promotion descriptor shape and mandatory private validation / pull-request / evidence policy; rejects credential-like filenames, private-custody paths and unreviewed symlinks; and rejects any `releases/`, `dist/`, `artifacts/` or `installers/` payload until an independently reviewed **candidate verifier** exists. It reports `releaseQualified: false` even when bootstrap validation passes.

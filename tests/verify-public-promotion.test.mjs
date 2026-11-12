@@ -72,3 +72,17 @@ test('Git index mode check rejects unmerged stages, duplicate entries and partia
   assert.throws(() => validateGitIndexModes('100644 ' + sha + ' 0\t../escape\0'),
     /unsafe/);
 });
+
+test('public source paths reject cross-platform case and Unicode aliases', () => {
+  assert.throws(() => validatePaths(['README.md', 'readme.MD']), /non-portable/);
+  assert.throws(() => validatePaths(['docs/caf\u00e9.md', 'docs/cafe\u0301.md']), /non-portable/);
+  assert.equal(validatePaths(['README.md', 'docs/guide.md', 'src/index.js']), true);
+});
+
+test('public source paths reject Windows device, trailing and invalid names', () => {
+  for (const name of ['CON', 'docs/aux.txt', 'tools/LPT1.log', 'COM9/file',
+    'docs/trailing.', 'docs/trailing ', 'docs/name:stream', 'docs/name|alias',
+    'src/.git/config']) {
+    assert.throws(() => validatePaths([name]), /non-portable/, name);
+  }
+});
