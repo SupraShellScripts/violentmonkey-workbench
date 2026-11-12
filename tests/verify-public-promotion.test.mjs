@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { validateDescriptor, validatePaths, validateGitIndexModes, verifyBootstrap } from '../tools/verify-public-promotion.mjs';
+import { validateDescriptor, validatePaths, validateGitIndexModes, validateTrackedCheckoutPaths, verifyBootstrap } from '../tools/verify-public-promotion.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('../coordination/consumer.json', import.meta.url), 'utf8'));
 const copy = () => structuredClone(fixture);
@@ -85,4 +85,11 @@ test('public source paths reject Windows device, trailing and invalid names', ()
     'src/.git/config']) {
     assert.throws(() => validatePaths([name]), /non-portable/, name);
   }
+});
+
+test('public checkout custody requires exact tracked and physical file equivalence', () => {
+  assert.equal(validateTrackedCheckoutPaths(['README.md', 'docs/help.md'], ['docs/help.md', 'README.md']), true);
+  assert.throws(() => validateTrackedCheckoutPaths(['README.md'], ['README.md', 'docs/missing.md']), /missing=docs\/missing\.md/);
+  assert.throws(() => validateTrackedCheckoutPaths(['README.md', 'untracked-helper.js'], ['README.md']), /untracked=untracked-helper\.js/);
+  assert.throws(() => validateTrackedCheckoutPaths(['README.md', 'artifacts/payload.zip'], ['README.md']), /bootstrap-only/);
 });

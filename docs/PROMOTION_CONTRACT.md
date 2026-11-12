@@ -59,7 +59,7 @@ node --test tests/verify-public-promotion.test.mjs
 node tools/verify-public-promotion.mjs
 ```
 
-The checked-out public source is also required to materialize consistently across Windows, macOS and Linux: the path guard rejects case/Unicode-normalization aliases, Windows reserved device names, trailing dot/space segments and other invalid checkout names. This remains a path-level check, not a cross-platform runtime test.
+The checked-out public source is also required to materialize consistently across Windows, macOS and Linux: the path guard rejects case/Unicode-normalization aliases, Windows reserved device names, trailing dot/space segments and other invalid checkout names. This remains a path-level check, not a cross-platform runtime test. The public checkout must also match the reviewed Git index **in both directions**; an untracked file is rejected just as a missing tracked file is. This prevents accidental untracked or generated payloads entering a public promotion checkout.
 
 The checker also rejects submodules/gitlinks (mode `160000`), tracked symlinks (mode `120000`), unmerged Git index entries and missing tracked files using read-only `git ls-files --stage -z`; it does not fetch any other repository. This Git index custody check is distinct from release-asset and browser qualification.
 

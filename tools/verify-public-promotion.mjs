@@ -154,6 +154,24 @@ export function inspectTree(root) {
   return found.sort();
 }
 
+/**
+ * A public promotion checkout must be exactly the reviewed Git index tree.
+ * An untracked payload is no more authorized than a missing tracked source.
+ */
+export function validateTrackedCheckoutPaths(physicalPaths, indexPaths) {
+  validatePaths(physicalPaths);
+  validatePaths(indexPaths);
+  const physical = new Set(physicalPaths);
+  const tracked = new Set(indexPaths);
+  const missing = indexPaths.filter(filePath => !physical.has(filePath));
+  const extra = physicalPaths.filter(filePath => !tracked.has(filePath));
+  if (missing.length || extra.length) {
+    throw new Error('Public checkout differs from reviewed Git index: missing=' +
+      (missing.join(',') || 'none') + '; untracked=' + (extra.join(',') || 'none'));
+  }
+  return true;
+}
+
 export function verifyBootstrap(root) {
   const normalizedRoot = resolve(root);
   const descriptor = JSON.parse(readFileSync(resolve(normalizedRoot, 'coordination/consumer.json'), 'utf8'));
@@ -165,8 +183,7 @@ export function verifyBootstrap(root) {
     maxBuffer: 4 * 1024 * 1024,
   });
   const tracked = validateGitIndexModes(index);
-  const missing = tracked.filter(filePath => !paths.includes(filePath));
-  if (missing.length) throw new Error('Tracked public files absent from checkout: ' + missing.join(', '));
+  validateTrackedCheckoutPaths(paths, tracked);
   return { status: 'pass', mode: 'bootstrap-only', releaseQualified: false, repository: REPOSITORY, filesChecked: paths.length, trackedFilesChecked: tracked.length };
 }
 
