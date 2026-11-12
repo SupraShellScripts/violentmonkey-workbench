@@ -8,24 +8,41 @@ on:
 permissions:
   contents: read
 
+env:
+  QUALIFIED_PUBLIC_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 concurrency:
   group: public-workbench-bootstrap-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   descriptor-and-custody:
-    name: Descriptor and public custody boundary
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    name: Descriptor and public custody boundary (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 7
     steps:
       - name: Checkout PR tree (read-only)
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node.js 24
         with:
+          ref: ${{ env.QUALIFIED_PUBLIC_SOURCE_SHA }}
           persist-credentials: false
       - name: Install Node.js 24 for dependency-free verification
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, Node.js 24
         with:
           node-version: '24'
+      - name: Assert exact PR source identity
+        shell: pwsh
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -cne $env:QUALIFIED_PUBLIC_SOURCE_SHA) {
+            throw "Public bootstrap checkout is not the reviewed PR source HEAD."
+          }
+          Write-Output "Qualified public checkout: $actual"
+
       - name: Run negative contract tests
         run: node --test tests/verify-public-promotion.test.mjs
       - name: Reject unqualified public payloads
