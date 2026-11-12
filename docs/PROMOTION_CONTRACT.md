@@ -1,3 +1,6 @@
+> [!WARNING]
+> **HISTORICAL CONTRACT — NOT A CURRENT RELEASE PATH (deprecated 2026-11-12).** The standalone Workbench product and its promotion pipeline have been sunset. This document is retained solely for reproducibility of earlier guardrails. **Do not create a release candidate, install a native host, or publish a Workbench distribution using these instructions.** The authoritative public disposition is [the sunset notice](SUNSET.md). Ordinary userscripts have their own separate publication authority; for current editor/agent usage select [official Violentmonkey](https://github.com/violentmonkey/violentmonkey) with [official MCP](https://github.com/violentmonkey/mcp). The remaining bootstrap CI is a read-only pre-release path guard with `releaseQualified=false`, not a distribution workflow.
+
 # Public promotion contract
 
 This repository is the reviewed public output of private engineering performed in `SupraShellScripts/violentmonkey-workbench-private`.
